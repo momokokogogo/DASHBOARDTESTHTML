@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Synthwave Console</title>
+<style>
+body {
+margin: 0;
+background-color: #050a1f;
+color: #0ff;
+font-family: 'Courier New', monospace;
+}
+#bootScreen {
+height: 100vh;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+animation: bootFade 4s forwards;
+}
+.glow-text {
+font-size: 2rem;
+text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+animation: flicker 1.5s infinite;
+margin-bottom: 20px;
+}
+.loader-bar {
+width: 300px;
+height: 10px;
+background: #222;
+border: 2px solid #0ff;
+overflow: hidden;
+}
+.loader-fill {
+width: 0%;
+height: 100%;
+background: #0ff;
+animation: loadProgress 3s forwards;
+}
+@keyframes loadProgress { to { width: 100%; } }
+@keyframes flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+@keyframes bootFade { to { opacity: 0; display: none; } }
+
+#dashboard {
+display: none;
+padding: 20px;
+}
+.tab {
+display: inline-block;
+margin-right: 15px;
+padding: 10px;
+background: #111;
+border: 2px solid #0ff;
+color: #0ff;
+cursor: pointer;
+text-shadow: 0 0 5px #0ff;
+}
+.tab:hover { background: #222; }
+.panel {
+margin-top: 20px;
+padding: 15px;
+border: 2px solid #0ff;
+background: rgba(0, 0, 30, 0.8);
+box-shadow: 0 0 20px #0ff;
+}
+.hidden { display: none; }
+#consoleOutput {
+height: 200px;
+overflow-y: auto;
+background: rgba(0,0,0,0.9);
+padding: 10px;
+border: 2px solid #0ff;
+}
+#consoleInput {
+width: 100%;
+padding: 8px;
+background: #111;
+color: #0ff;
+border: none;
+border-top: 2px solid #0ff;
+font-family: monospace;
+}
+</style>
+</head>
+<body>
+<div id="bootScreen">
+<h1 class="glow-text">🟡 Initializing Synthwave Console...</h1>
+<div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<div id="dashboard">
+<div id="tabs">
+<div class="tab" onclick="showPanel('system')">System Info</div>
+<div class="tab" onclick="showPanel('controls')">Controls</div>
+<div class="tab" onclick="showPanel('stats')">Stats</div>
+<div class="tab" onclick="showPanel('statistics')">Statistics</div>
+<div class="tab" onclick="showPanel('terminal')">Terminal</div>
+</div>
+
+<div id="system" class="panel">
+<h2>🖥️ System Info</h2>
+<p>Device: <span id="deviceType">Detecting...</span></p>
+<p>OS: <span id="osInfo">Detecting...</span></p>
+<p>Browser: <span id="browserInfo">Detecting...</span></p>
+<p>Resolution: <span id="screenRes">Detecting...</span></p>
+<p>Time: <span id="localTime">--:--:--</span></p>
+</div>
+
+<div id="controls" class="panel hidden">
+<h2>🎮 Controls</h2>
+<p><em>🚧 Coming Soon…</em></p>
+</div>
+
+<div id="stats" class="panel hidden">
+<h2>📊 Stats</h2>
+<p>System Uptime: <span id="uptime">0 min</span></p>
+<p>Memory Load: <span id="memLoad">0%</span></p>
+<p>CPU Usage: <span id="cpuLoad">0%</span></p>
+</div>
+
+<div id="statistics" class="panel hidden">
+<h2>📈 Statistics</h2>
+<p>Session Length: <span id="sessionLength">0 min</span></p>
+<p>Tab Switches: <span id="switchCount">0</span></p>
+<p>Keypress Count: <span id="keyCount">0</span></p>
+</div>
+
+<div id="terminal" class="panel hidden">
+<h2>💻 Terminal Console</h2>
+<div id="consoleOutput"></div>
+<input type="text" id="consoleInput" placeholder="Type JavaScript code..." autocomplete="off" autofocus />
+</div>
+</div>
+
+<script>
+let tabCount = 0;
+let keyCount = 0;
+let startTime = Date.now();
+
+setTimeout(() => {
+document.getElementById("bootScreen").style.display = "none";
+document.getElementById("dashboard").style.display = "block";
+updateSystemInfo();
+}, 4000);
+
+function showPanel(id) {
+tabCount++;
+document.getElementById("switchCount").textContent = tabCount;
+["system", "controls", "stats", "statistics", "terminal"].forEach(p => {
+document.getElementById(p).classList.add("hidden");
+});
+document.getElementById(id).classList.remove("hidden");
+}
+
+function updateSystemInfo() {
+document.getElementById("deviceType").textContent = navigator.userAgent.includes("Android") ? "Android" : "Desktop";
+document.getElementById("osInfo").textContent = navigator.platform;
+document.getElementById("browserInfo").textContent = navigator.userAgent;
+document.getElementById("screenRes").textContent = screen.width + "x" + screen.height;
+}
+
+setInterval(() => {
+document.getElementById("localTime").textContent = new Date().toLocaleTimeString();
+}, 1000);
+
+setInterval(() => {
+document.getElementById("cpuLoad").textContent = Math.floor(Math.random() * 100) + "%";
+document.getElementById("memLoad").textContent = Math.floor(Math.random() * 100) + "%";
+}, 2000);
+
+setInterval(() => {
+let uptime = Math.floor((Date.now() - startTime) / 60000);
+document.getElementById("uptime").textContent = uptime + " min";
+document.getElementById("sessionLength").textContent = uptime + " min";
+}, 60000);
+
+document.addEventListener("keydown", () => {
+keyCount++;
+document.getElementById("keyCount").textContent = keyCount;
+});
+
+const inputField = document.getElementById("consoleInput");
+const outputArea = document.getElementById("consoleOutput");
+let commandHistory = [];
+let historyIndex = -1;
+
+inputField.addEventListener("keydown", e => {
+if (e.key === "Enter") {
+const cmd = inputField.value.trim();
+commandHistory.push(cmd);
+historyIndex = commandHistory.length;
+inputField.value = "";
+
+try {
+const result = eval(cmd);
+outputArea.innerHTML += `> ${cmd}<br><span style="color:#0f0;">${result}</span><br>`;
+} catch (err) {
+outputArea.innerHTML += `> ${cmd}<br><span style="color:#f00;">Error: ${err.message}</span><br>`;
+}
+outputArea.scrollTop = outputArea.scrollHeight;
+} else if (e.key === "ArrowUp") {
+if (historyIndex > 0) {
+historyIndex--;
+inputField.value = commandHistory[historyIndex];
+}
+} else if (e.key === "ArrowDown") {
+if (historyIndex < commandHistory.length - 1) {
+historyIndex++;
+inputField.value = commandHistory[historyIndex];
+} else {
+inputField.value = "";
+}
+}
+});
+</script>
+</body>
+</html>
